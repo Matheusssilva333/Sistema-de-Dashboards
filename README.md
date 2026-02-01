@@ -1,11 +1,11 @@
-# 🛡️ Sistema de Geração de Dashboards com Segurança Avançada
+# 🛡️ Sistema de Geração de Dashboards para Gestão de Trafego
 
 ![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![Security](https://img.shields.io/badge/security-enterprise-green.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109.0-green.svg)
 
-Sistema empresarial completo de geração de dashboards dinâmicos com múltiplas camadas de segurança avançada para proteção contra ataques cibernéticos.
+Sistema empresarial completo de geração de dashboards dinâmicos com múltiplas camadas de segurança avançada para gestores de trafego.
 
 ---
 
