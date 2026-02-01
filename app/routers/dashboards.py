@@ -296,53 +296,135 @@ async def remove_widget(
 # ENDPOINTS DE DADOS
 # =============================================================================
 @router.get("/dashboards/{dashboard_id}/widgets/{widget_id}/data", response_model=dict)
-@limiter.limit("100/minute")
+@limiter.limit("50/minute")
 async def get_widget_data(
     request: Request,
     dashboard_id: str,
     widget_id: str,
+    ad_account_id: Optional[str] = None,
+    campaign_id: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """
-    Obtém dados processados para um widget específico
+    Obtém dados processados para um widget específico utilizando a API da Meta Ads
     
-    Rate Limit: 100 requisições por minuto (alta frequência para refresh)
+    Args:
+        dashboard_id: ID do dashboard
+        widget_id: ID do widget no dashboard
+        ad_account_id: ID da conta de anúncios (opcional, sobrescreve contexto)
+        campaign_id: ID da campanha (opcional, para filtro específico)
     """
     try:
         # Sanitiza IDs
         dashboard_id = sanitizer.sanitize_sql(dashboard_id)
         widget_id = sanitizer.sanitize_sql(widget_id)
         
-        # TODO: Buscar configuração do widget e dados reais
-        # Mock data por enquanto
-        mock_widget = WidgetConfig(
-            id=widget_id,
-            title="Example Widget",
-            chart_type="line",
-            data_source="meta_ads",
-            metrics=["spend"],
-            dimensions=["date"]
-        )
+        # 1. Recuperar configuração do dashboard/widget (Simulado pois não temos persistência ainda)
+        # Em produção, buscaria no banco: dashboard = db.query(Dashboard).filter(...)
+        dashboard_template = dashboard_manager.get_template("marketing_overview")
+        target_widget = None
         
-        mock_data = [
-            {"date": "2024-01-01", "spend": 100},
-            {"date": "2024-01-02", "spend": 150},
-            {"date": "2024-01-03", "spend": 200}
-        ]
+        # Procura o widget na configuração (lógica temporária até ter persistência)
+        if dashboard_template:
+            for w in dashboard_template.config.widgets:
+                if w.id == widget_id:
+                    target_widget = w
+                    break
         
-        processed_data = data_processor.process_widget_data(mock_widget, mock_data)
+        # Fallback se não encontrar (cria um widget temporário para teste se não existir)
+        if not target_widget:
+             # Tenta buscar das factories padrão para permitir testes com IDs conhecidos
+            all_templates = dashboard_manager.list_templates()
+            for tmpl in all_templates:
+                for w in tmpl.config.widgets:
+                    if w.id == widget_id:
+                        target_widget = w
+                        break
+        
+        if not target_widget:
+             raise HTTPException(status_code=404, detail="Widget não encontrado")
+
+        # 2. Definir período de dados
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+        
+        if target_widget.time_range == "today":
+            start_date = end_date
+        elif target_widget.time_range == "yesterday":
+            start_date = end_date - timedelta(days=1)
+            end_date = start_date
+        elif target_widget.time_range == "last_7_days":
+            start_date = end_date - timedelta(days=7)
+        elif target_widget.time_range == "this_month":
+            start_date = end_date.replace(day=1)
+        # ... outros ranges
+        
+        # 3. Buscar dados da Fonte
+        raw_data = []
+        
+        if target_widget.data_source == "meta_ads":
+            from app.services.meta_api import meta_ads_service
+            
+            # Se não fornecer conta/campanha, tentar usar padrão ou erro
+            # Aqui assumimos que precisamos de um campaign_id ou account_id
+            # Para simplificar o teste, se não tiver campaign_id, pegamos da primeira conta
+            
+            target_ids = []
+            if campaign_id:
+                target_ids = [campaign_id]
+            else:
+                # Tenta pegar todas as campanhas da conta ativa (mockada ou real)
+                # Em um cenário real, o dashboard teria um contexto de "Conta Selecionada"
+                if ad_account_id:
+                     campaigns = meta_ads_service.get_campaigns(ad_account_id, status=['ACTIVE', 'PAUSED'])
+                     target_ids = [c['campaign_id'] for c in campaigns[:5]] # Limitando para não sobrecarregar
+            
+            if not target_ids:
+                 # Retornar dados vazios ou mockados se não tiver contexto de campanha para evitar erro 500
+                 # Isso permite que o frontend renderize o widget vazio
+                 logger.warning("Nenhuma campanha ou conta selecionada para buscar dados")
+                 raw_data = []
+            else:
+                for cid in target_ids:
+                    # Determinar breakdown
+                    breakdown = None
+                    if "age" in target_widget.dimensions: breakdown = ["age"]
+                    elif "gender" in target_widget.dimensions: breakdown = ["gender"]
+                    # etc
+                    
+                    insights = meta_ads_service.get_campaign_insights(
+                        campaign_id=cid,
+                        date_start=start_date,
+                        date_end=end_date,
+                        breakdown=breakdown
+                    )
+                    
+                    # Adicionar nome da campanha aos dados para agrupamento
+                    # (O insight já deve trazer ou podemos enriquecer)
+                    for i in insights:
+                         i['campaign_id'] = cid
+                         # Se precisar do nome, teria que buscar da lista de campanhas cacheada
+                    
+                    raw_data.extend(insights)
+
+        # 4. Processar dados
+        processed_data = data_processor.process_widget_data(target_widget, raw_data)
         
         return {
             "widget_id": widget_id,
             "data": processed_data,
-            "last_updated": "2024-01-01T00:00:00"
+            "meta": {
+                "period": f"{start_date.date()} to {end_date.date()}",
+                "source": target_widget.data_source
+            }
         }
     
     except Exception as e:
-        logger.error(f"Erro ao obter dados do widget: {e}")
+        logger.error(f"Erro ao obter dados do widget: {e}", exc_info=True)
+        # Retorna erro amigável em vez de 500 cru
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro ao obter dados do widget"
+            detail=f"Erro ao processar dados: {str(e)}"
         )
 
 
