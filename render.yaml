@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: sistema-de-dashboards-gestao-de-trafego
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: APP_URL
+        value: https://sistema-de-dashboards-gestao-de-trafego.onrender.com
+      - key: META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: MERCADO_PAGO_ACCESS_TOKEN
+        sync: false
