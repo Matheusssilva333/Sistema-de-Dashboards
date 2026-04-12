@@ -16,6 +16,14 @@ const testimonials = [
     content: "Matheus é um programador e um resolvedor de problemas nato. Em constante aprendizado, busca aprender e aplicar seus conhecimentos em produtos reais.",
     image: "/social-proof/arthur.png",
     date: "21 de janeiro de 2026"
+  },
+  {
+    name: "Ícaro de Sousa Soares",
+    role: "Colaborador em Escritório de Advocacia | Desenvolvedor | Python | Java",
+    content: "Manteve a comunicação durante o projeto e entregou conforme solicitado.",
+    image: "/social-proof/icaro.png",
+    date: "13 de janeiro de 2026",
+    rating: "5.0"
   }
 ];
 
@@ -29,7 +37,7 @@ export default function SocialProof() {
         </h2>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {testimonials.map((t, idx) => (
           <motion.div
             key={idx}
@@ -54,7 +62,15 @@ export default function SocialProof() {
                 <div className="pt-4 border-t border-[#141414]/10">
                   <h4 className="font-mono font-bold text-sm uppercase tracking-tight">{t.name}</h4>
                   <p className="font-mono text-[10px] uppercase opacity-60 leading-tight mt-1">{t.role}</p>
-                  <p className="font-mono text-[9px] uppercase opacity-40 mt-2">{t.date}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="font-mono text-[9px] uppercase opacity-40">{t.date}</p>
+                    {t.rating && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-mono font-bold text-yellow-600">★</span>
+                        <span className="font-mono text-[9px] font-bold text-yellow-600">{t.rating}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

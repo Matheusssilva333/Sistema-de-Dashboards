@@ -15,6 +15,8 @@ import { getTrafficInsights } from "../services/geminiService";
 
 import Pricing from "./Pricing";
 import SocialProof from "./SocialProof";
+import Hero from "./Hero";
+import Features from "./Features";
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -155,6 +157,19 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-8">
+        {/* Hero Section - Visible when not connected */}
+        {activeTab === "dashboard" && !data?.isConnected && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="mb-12"
+          >
+            <Hero />
+            <Features />
+          </motion.div>
+        )}
+
         <header className="flex justify-between items-center mb-12">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -200,6 +215,14 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
+              {/* Show Hero and Features when not connected */}
+              {!data?.isConnected && (
+                <div className="mb-12">
+                  <Hero />
+                  <Features />
+                </div>
+              )}
+
               {error && (
                 <div className="mb-8 p-4 border border-red-600 bg-red-50 text-red-600 font-mono text-xs flex items-center gap-3">
                   <AlertCircle className="w-4 h-4" />
