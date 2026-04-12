@@ -14,6 +14,7 @@ import { DashboardData } from "../types";
 import { getTrafficInsights } from "../services/geminiService";
 
 import Pricing from "./Pricing";
+import SocialProof from "./SocialProof";
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -371,6 +372,9 @@ export default function Dashboard() {
                       </table>
                     </div>
                   </div>
+
+                  {/* Social Proof Section */}
+                  <SocialProof />
                 </>
               )}
             </motion.div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, Zap, Shield, Crown } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 
 interface Plan {
@@ -110,7 +110,7 @@ export default function Pricing({ onSelectPlan, currentPlan }: PricingProps) {
               )}
             </div>
 
-            <h3 className="text-2xl font-mono font-bold uppercase mb-2">{plan.name}</h3>
+            <h3 className="text-2xl font-mono font-bold uppercase mb-2 group-hover:tracking-widest transition-all duration-500">{plan.name}</h3>
             <div className="flex items-baseline gap-1 mb-4">
               <span className="text-3xl font-mono font-bold">R$ {plan.price}</span>
               <span className="text-xs font-mono opacity-50">/mês</span>
@@ -119,10 +119,16 @@ export default function Pricing({ onSelectPlan, currentPlan }: PricingProps) {
 
             <ul className="space-y-4 mb-12 flex-1">
               {plan.features.map((feature, fIdx) => (
-                <li key={fIdx} className="flex items-start gap-3 text-xs font-mono uppercase tracking-tight">
+                <motion.li 
+                  key={fIdx} 
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: fIdx * 0.05 }}
+                  className="flex items-start gap-3 text-xs font-mono uppercase tracking-tight"
+                >
                   <Check className="w-4 h-4 text-green-600 group-hover:text-green-400 shrink-0" />
                   <span>{feature}</span>
-                </li>
+                </motion.li>
               ))}
             </ul>
 
